@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Simulador académico de expresiones regulares con construcción Thompson NFA y DFA por subconjuntos." />
+  <title>RegexLab · NFA / DFA · Lenguajes y Autómatas I</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">λ</div>
+        <div>
+          <div class="brand-name">RegexLab</div>
+          <div class="brand-subtitle">Simulador formal · NFA + DFA · Lenguajes y Autómatas I</div>
+        </div>
+      </div>
+      <div class="student-chip">
+        <span class="status-dot"></span>
+        <div>
+          <strong>Jesús Eduardo Hernández Zavala</strong>
+          <small>Matrícula 24500264</small>
+        </div>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <aside class="sidebar">
+        <section class="panel intro-panel">
+          <div class="eyebrow">LABORATORIO FORMAL DE LENGUAJES</div>
+          <h1>Simulador de expresiones regulares</h1>
+          <p>Escribe una expresión, agrega cadenas de prueba y observa su recorrido paso a paso en el autómata.</p>
+        </section>
+
+        <section class="panel controls-panel">
+          <div class="panel-heading">
+            <div>
+              <span class="section-kicker">01</span>
+              <h2>Configuración</h2>
+            </div>
+            <button class="icon-btn" id="clearAll" title="Reiniciar todo" aria-label="Reiniciar todo">↺</button>
+          </div>
+
+          <label class="field-label" for="regexInput">Expresión regular</label>
+          <div class="regex-input-wrap">
+            <span class="regex-prefix">/</span>
+            <input id="regexInput" class="mono" type="text" value="a(b+c)*" spellcheck="false" autocomplete="off" />
+            <span class="regex-suffix">/</span>
+          </div>
+          <div class="flags-row" aria-label="Opciones de interpretación">
+            <label class="flag"><input type="checkbox" value="i" id="flagI"><span>i</span></label>
+            <label class="flag"><input type="checkbox" value="m" id="flagM"><span>m</span></label>
+            <label class="flag"><input type="checkbox" value="s" id="flagS"><span>s</span></label>
+            <label class="flag"><input type="checkbox" value="u" id="flagU" checked><span>u</span></label>
+          </div>
+
+          <label class="field-label" for="stringsInput">Cadenas de prueba</label>
+          <textarea id="stringsInput" class="mono strings-area" spellcheck="false">a
+ab
+ac
+abb
+abc
+acb
+acc
+abcb
+
+b
+c
+ba
+aa
+baa
+abcx
+a1
+ca</textarea>
+          <div class="strings-tools">
+            <div class="field-hint">Una cadena por línea. Usa ! para representar ε, como en JFLAP. Todas se procesan en una sola ejecución.</div>
+            <button class="secondary-btn clear-strings-btn" id="clearStrings" type="button" title="Borrar todas las cadenas de prueba">✕ Limpiar cadenas</button>
+          </div>
+
+          <label class="switch-row">
+            <span>
+              <strong>Coincidencia completa</strong>
+              <small>El DFA debe terminar en un estado de aceptación.</small>
+            </span>
+            <input type="checkbox" id="fullMatch" checked>
+            <span class="switch-ui"></span>
+          </label>
+
+          <div class="actions">
+            <button class="primary-btn" id="runBtn"><span>▶</span> Construir y simular</button>
+            <button class="secondary-btn" id="generateStringsBtn">Generar cadenas</button><button class="secondary-btn" id="restoreTeacherBtn">Restablecer ejemplo</button><button class="secondary-btn" id="examplesBtn">Ejemplos</button>
+          </div>
+        </section>
+
+        <section class="panel reference-panel">
+          <div class="panel-heading compact">
+            <div>
+              <span class="section-kicker">02</span>
+              <h2>Sintaxis admitida</h2>
+            </div>
+          </div>
+          <div class="reference-grid">
+            <span><code>a</code> literal</span>
+            <span><code>.</code> cualquier carácter</span>
+            <span><code>*</code> cero o más</span>
+            <span><code>+</code> unión / alternativa (JFLAP)</span>
+            <span><code>?</code> opcional</span>
+            <span><code>|</code> alternativa</span>
+            <span><code>[abc]</code> conjunto</span>
+            <span><code>[a-z]</code> rango</span>
+            <span><code>\d</code> dígito</span>
+            <span><code>\w</code> palabra</span>
+            <span><code>\s</code> espacio</span>
+            <span><code>{m,n}</code> repetición</span>
+          </div>
+          <p class="formal-note"><strong>JFLAP:</strong> aquí <code>+</code> significa unión. El motor usa Thompson para el NFA y subconjuntos para el DFA.</p>
+        </section>
+      </aside>
+
+      <section class="content">
+        <div class="hero-row">
+          <div>
+            <div class="breadcrumb">LABORATORIO / SIMULADOR FORMAL</div>
+            <h2>Simula el recorrido como en JFLAP</h2>
+            <p>La expresión se transforma en un NFA y en un DFA. El simulador muestra qué estados están activos en cada paso, permitiendo ver exactamente cómo se procesa cada carácter.</p>
+          </div>
+          <div class="regex-preview" id="regexPreview">/a(b+c)*/u</div>
+        </div>
+
+        <section class="metrics" id="metrics">
+          <div class="metric-card total"><span class="metric-label">Cadenas analizadas</span><strong id="totalCount">0</strong><span class="metric-note">lote actual</span></div>
+          <div class="metric-card accepted"><span class="metric-label">Aceptadas</span><strong id="acceptedCount">0</strong><span class="metric-note">terminan en F</span></div>
+          <div class="metric-card rejected"><span class="metric-label">Rechazadas</span><strong id="rejectedCount">0</strong><span class="metric-note">no pertenecen al lenguaje</span></div>
+          <div class="metric-card rate"><span class="metric-label">Porcentaje de aceptación</span><strong id="rateCount">0%</strong><span class="metric-note">resultado del lote</span></div>
+        </section>
+
+        <section class="automaton-panel">
+          <div class="automaton-toolbar">
+            <div>
+              <span class="section-kicker">03</span>
+              <h2>Autómata generado</h2>
+              <p id="automatonSummary">Construye un autómata para visualizar sus estados.</p>
+            </div>
+            <div class="automaton-actions">
+              <div class="view-tabs" role="tablist">
+                <button class="view-tab active" data-view="nfa">NFA · JFLAP</button>
+                <button class="view-tab" data-view="dfa">DFA</button>
+              </div>
+              <select id="traceSelect" class="trace-select" aria-label="Cadena para visualizar recorrido">
+                <option value="">Recorrido: selecciona una cadena</option>
+              </select>
+              <div class="trace-controls">
+                <button class="trace-btn" id="tracePrev" title="Paso anterior" disabled>◀</button>
+                <button class="trace-play" id="tracePlay">▶ Animar recorrido</button>
+                <button class="trace-btn" id="traceNext" title="Siguiente paso" disabled>▶</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="automaton-meta" id="automatonMeta">
+            <div><span>Estados</span><strong>—</strong></div>
+            <div><span>Finales</span><strong>—</strong></div>
+            <div><span>Alfabeto observado</span><strong>—</strong></div>
+            <div><span>Construcción</span><strong>Thompson + subconjuntos</strong></div>
+          </div>
+
+          <div class="legend">
+            <span><i class="legend-start"></i> Inicio</span>
+            <span><i class="legend-state"></i> Estado</span>
+            <span><i class="legend-final"></i> Aceptación</span>
+            <span><i class="legend-active"></i> Configuración activa</span>
+          </div>
+
+          <div class="graph-wrap">
+            <svg id="automatonSvg" role="img" aria-label="Diagrama del autómata generado"></svg>
+            <div class="graph-empty" id="graphEmpty">Ejecuta una simulación para generar el diagrama NFA/DFA.</div>
+          </div>
+
+          <div class="trace-panel" id="tracePanel">
+            <div class="trace-panel-head">
+              <div>
+                <span class="trace-eyebrow">RECORRIDO SELECCIONADO</span>
+                <h3 id="traceTitle">Ninguna cadena seleccionada</h3>
+              </div>
+              <span id="traceBadge" class="badge neutral">—</span>
+            </div>
+            <div class="trace-config"><span>Configuración actual</span><strong id="traceConfig">—</strong><span class="trace-step-label" id="traceStepLabel">Paso 0 / 0</span></div>
+            <div id="traceSteps" class="trace-steps"></div>
+          </div>
+        </section>
+
+        <section class="results-panel">
+          <div class="results-toolbar">
+            <div>
+              <span class="section-kicker">04</span>
+              <h2>Resultados de simulación</h2>
+            </div>
+            <div class="toolbar-actions">
+              <span class="result-state" id="resultState">Esperando simulación</span>
+              <button class="secondary-btn small" id="exportBtn" disabled>Exportar CSV</button>
+            </div>
+          </div>
+
+          <div id="errorBox" class="error-box hidden"></div>
+          <div id="emptyState" class="empty-state">
+            <div class="empty-icon">λ</div>
+            <h3>Lista para ejecutar</h3>
+            <p>Para el caso <strong>a(b+c)*</strong>, las cadenas ya están cargadas. Selecciona una cadena y usa “Siguiente” o “Animar recorrido” para observar cada paso.</p>
+          </div>
+          <div id="resultsList" class="results-list"></div>
+        </section>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div><strong>RegexLab</strong><span class="footer-sep">•</span> Lenguajes y Autómatas I</div>
+      <div>Jesús Eduardo Hernández Zavala <span class="footer-id">24500264</span></div>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
